@@ -162,6 +162,7 @@ def main():
     with open(os.path.join(args.save, f"{args.name}_metric_history.json"), "w") as f:
         json.dump(trainer.metric_history, f)
 
+    trainer.close_writer()
 
 def plot_training_curves(history, save_dir, run_name):
     for metric, values in history.items():

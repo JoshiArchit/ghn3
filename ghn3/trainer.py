@@ -27,6 +27,7 @@ from .utils import Logger, print_grads, log
 from .ddp_utils import is_ddp, get_ddp_rank, avg_ddp_metric
 from .nn import from_pretrained
 from .ops import Network
+from torch.utils.tensorboard import SummaryWriter
 
 try:
     from timm.optim import Lamb  # timm was not used in the paper's experiments, so it's optional
@@ -154,6 +155,9 @@ class Trainer:
             'amp_scale': [],
             'sec_per_batch': []
         }
+
+        self.writer = SummaryWriter(
+            log_dir=os.path.join(save_dir, "tensorboard")) if self.rank == 0 and save_dir else None
 
     def reset_metrics(self, epoch):
         self._step = 0
@@ -443,6 +447,14 @@ class Trainer:
         step_ = self._step if step is None else (step + 1)
         if step_ % self.log_interval == 0 or step_ >= self.n_batches - 1 or step_ == 1:
             metrics = {metric: value.avg for metric, value in self.metrics.items()}
+
+            # Tensorboard logs
+            if self.writer:
+                for key, val in metrics.items():
+                    self.writer.add_scalar(key, val, step_)
+                self.writer.add_scalar('learning_rate', self.get_lr(), step_)
+
+            # Metrics for json and matplotlib
             if self.amp:
                 amp_scale = self.scaler._check_scale_growth_tracker('update')[0].item()
                 metrics['amp_scale'] = amp_scale
@@ -455,4 +467,6 @@ class Trainer:
 
             self.logger(step_, metrics)
 
-
+    def close_writer(self):
+        if self.writer:
+            self.writer.close()
