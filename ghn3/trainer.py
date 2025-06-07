@@ -152,12 +152,11 @@ class Trainer:
             'loss': [],
             'top1': [],
             'top5': [],
-            'amp_scale': [],
-            'sec_per_batch': []
+            'amp_scale': []
         }
 
         self.writer = SummaryWriter(
-            log_dir=os.path.join(save_dir, "tensorboard")) if self.rank == 0 and save_dir else None
+            log_dir=os.path.join(self.checkpoint_path, "tensorboard")) if self.rank == 0 and save_dir else None
 
     def reset_metrics(self, epoch):
         self._step = 0
@@ -462,8 +461,6 @@ class Trainer:
 
             for metric in ['loss', 'top1', 'top5']:
                 self.metric_history[metric].append(metrics.get(metric, 0))
-
-            metrics['sec_per_batch'] = (self.logger.start_time - self.logger.start_time) / max(1, step_ - self.logger.start_step)
 
             self.logger(step_, metrics)
 
