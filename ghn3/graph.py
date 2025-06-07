@@ -328,7 +328,7 @@ class Graph:
             self._build_graph()   # automatically construct an initial computational graph
             self._add_virtual_edges(ve_cutoff=ve_cutoff)  # add virtual edges
             self._construct_features()  # initialize torch.Tensor node and edge features
-            # self.visualize(figname='graph', figsize=(20, 20), with_labels=True, font_size=4)  # for debugging purposes
+            self.visualize(figname='graph', figsize=(20, 20), with_labels=True, font_size=4)  # for debugging purposes
             if not hasattr(model, '_layered_modules'):
                 self.model.__dict__['_layered_modules'] = named_layered_modules(self.model)
             # self.layered_modules = self.model._layered_modules

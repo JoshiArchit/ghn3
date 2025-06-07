@@ -34,11 +34,15 @@ Example:
 
 
 import argparse
+import os
 import time
 from functools import partial
 from ppuda.config import init_config
 from ppuda.vision.loader import image_loader
 from ghn3 import GHN3, log, Trainer, DeepNets1MDDP, setup_ddp, clean_ddp
+import matplotlib.pyplot as plt
+import json
+
 
 log = partial(log, flush=True)
 
@@ -153,6 +157,22 @@ def main():
     if ddp.ddp:
         clean_ddp()
 
+    plot_training_curves(trainer.metric_history, args.save or ".", args.name)
+
+    with open(os.path.join(args.save, f"{args.name}_metric_history.json"), "w") as f:
+        json.dump(trainer.metric_history, f)
+
+
+def plot_training_curves(history, save_dir, run_name):
+    for metric, values in history.items():
+        plt.figure()
+        plt.plot(values)
+        plt.title(f"{metric.capitalize()} over Steps")
+        plt.xlabel("Step")
+        plt.ylabel(metric.capitalize())
+        plt.grid(True)
+        plt.savefig(os.path.join(save_dir, f"{run_name}_{metric}_plot.png"))
+        plt.close()
 
 if __name__ == '__main__':
     main()

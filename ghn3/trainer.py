@@ -147,6 +147,13 @@ class Trainer:
 
         self._reset(opt, opt_args, scheduler, scheduler_args, state_dict)
 
+        self.metric_history = {
+            'loss': [],
+            'top1': [],
+            'top5': [],
+            'amp_scale': []
+        }
+
     def reset_metrics(self, epoch):
         self._step = 0
         if epoch > self.start_epoch:
@@ -436,5 +443,13 @@ class Trainer:
         if step_ % self.log_interval == 0 or step_ >= self.n_batches - 1 or step_ == 1:
             metrics = {metric: value.avg for metric, value in self.metrics.items()}
             if self.amp:
-                metrics['amp_scale'] = self.scaler._check_scale_growth_tracker('update')[0].item()
+                amp_scale = self.scaler._check_scale_growth_tracker('update')[0].item()
+                metrics['amp_scale'] = amp_scale
+                self.metric_history['amp_scale'].append(amp_scale)
+
+            for metric in ['loss', 'top1', 'top5']:
+                self.metric_history[metric].append(metrics.get(metric, 0))
+
             self.logger(step_, metrics)
+
+
