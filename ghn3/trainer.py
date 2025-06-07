@@ -151,7 +151,8 @@ class Trainer:
             'loss': [],
             'top1': [],
             'top5': [],
-            'amp_scale': []
+            'amp_scale': [],
+            'sec_per_batch': []
         }
 
     def reset_metrics(self, epoch):
@@ -449,6 +450,8 @@ class Trainer:
 
             for metric in ['loss', 'top1', 'top5']:
                 self.metric_history[metric].append(metrics.get(metric, 0))
+
+            metrics['sec_per_batch'] = (self.logger.start_time - self.logger.start_time) / max(1, step_ - self.logger.start_step)
 
             self.logger(step_, metrics)
 
