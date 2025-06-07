@@ -156,7 +156,7 @@ class Trainer:
         }
 
         self.writer = SummaryWriter(
-            log_dir=os.path.join(self.checkpoint_path, "tensorboard")) if self.rank == 0 and save_dir else None
+            log_dir=os.path.join(self.checkpoint_path, "tensorboard")) if self.rank == 0
 
     def reset_metrics(self, epoch):
         self._step = 0
