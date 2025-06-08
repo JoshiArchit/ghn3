@@ -157,6 +157,7 @@ class Trainer:
 
         self.writer = SummaryWriter(
             log_dir=os.path.join(save_dir, "tensorboard")) if save_dir else None
+        print('Tensorboard writer initialized at %s' % self.writer.log_dir if self.writer else 'No Tensorboard writer')
 
     def reset_metrics(self, epoch):
         self._step = 0
