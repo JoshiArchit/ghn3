@@ -149,10 +149,17 @@ class Trainer:
         self._reset(opt, opt_args, scheduler, scheduler_args, state_dict)
 
         self.metric_history = {
+            # Per batch
             'loss': [],
             'top1': [],
             'top5': [],
-            'amp_scale': []
+            'amp_scale': [],
+
+            # Epoch-wise metrics
+            'loss_epoch': [],
+            'top1_epoch': [],
+            'top5_epoch': [],
+            'lr_epoch': []
         }
 
         self.writer = SummaryWriter(

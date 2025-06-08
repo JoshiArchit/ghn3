@@ -153,6 +153,20 @@ def main():
 
         trainer.scheduler_step()  # lr scheduler step
 
+        # Log average of metrics to TensorBoard per epoch
+        if trainer.writer:
+            trainer.writer.add_scalar("Train/Loss", trainer.metrics['loss'].avg, epoch)
+            trainer.writer.add_scalar("Train/Top1", trainer.metrics['top1'].avg, epoch)
+            trainer.writer.add_scalar("Train/Top5", trainer.metrics['top5'].avg, epoch)
+            trainer.writer.add_scalar("Train/LearningRate", trainer.get_lr(), epoch)
+
+            trainer.metric_history['loss_epoch'].append(trainer.metrics['loss'].avg)
+            trainer.metric_history['top1_epoch'].append(trainer.metrics['top1'].avg)
+            trainer.metric_history['top5_epoch'].append(trainer.metrics['top5'].avg)
+            trainer.metric_history['lr_epoch'].append(trainer.get_lr())
+
+
+
     log('done at {}!'.format(time.strftime('%Y%m%d-%H%M%S')))
     if ddp.ddp:
         clean_ddp()
@@ -165,15 +179,18 @@ def main():
     trainer.close_writer()
 
 def plot_training_curves(history, save_dir, run_name):
-    for metric, values in history.items():
+    for metric in ['loss_epoch', 'top1_epoch', 'top5_epoch', 'lr_epoch']:
+        if metric not in history:
+            continue
         plt.figure()
-        plt.plot(values)
-        plt.title(f"{metric.capitalize()} over Steps")
-        plt.xlabel("Step")
-        plt.ylabel(metric.capitalize())
+        plt.plot(history[metric])
+        plt.title(f"{metric.replace('_epoch', '').capitalize()} over Epochs")
+        plt.xlabel("Epoch")
+        plt.ylabel(metric.replace('_epoch', '').capitalize())
         plt.grid(True)
         plt.savefig(os.path.join(save_dir, f"{run_name}_{metric}_plot.png"))
         plt.close()
+
 
 if __name__ == '__main__':
     main()
