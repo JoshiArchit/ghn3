@@ -42,6 +42,7 @@ from ppuda.vision.loader import image_loader
 from ghn3 import GHN3, log, Trainer, DeepNets1MDDP, setup_ddp, clean_ddp
 import matplotlib.pyplot as plt
 import json
+from ghn3.custom_image_loader import load_images
 
 
 log = partial(log, flush=True)
@@ -54,6 +55,8 @@ def main():
     parser.add_argument('--ghn2', action='store_true', help='train GHN-2, also can use code from'
                                                             ' https://github.com/facebookresearch/ppuda to train GHN-2')
     parser.add_argument('--interm_epoch', type=int, default=5, help='intermediate epochs to keep checkpoints for')
+    parser.add_argument('--train_split', type=str, default='90', help='dataset split for training, e.g. 90 for 90% train, 10% val')
+    parser.add_argument('--train_classes_split', type=str, default='all', help='number of classes to use for training')
     ghn2 = parser.parse_known_args()[0].ghn2
 
     ddp = setup_ddp()
@@ -72,14 +75,17 @@ def main():
     is_imagenet = args.dataset.startswith('imagenet')
 
     log('loading the %s dataset...' % args.dataset.upper())
-    train_queue, _, num_classes = image_loader(args.dataset,
+    train_queue, _, num_classes = load_images(args.dataset,
                                                args.data_dir,
                                                im_size=args.imsize,
                                                test=False,
                                                batch_size=args.batch_size,
                                                num_workers=args.num_workers,
                                                seed=args.seed,
-                                               verbose=ddp.rank == 0)
+                                               verbose=ddp.rank == 0,
+                                              train_split=args.train_split,
+                                              train_split_classes=args.train_classes_split
+                                              )
 
     hid = args.hid
     s = 16 if is_imagenet else 11
