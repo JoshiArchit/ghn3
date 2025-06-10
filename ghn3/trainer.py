@@ -430,9 +430,8 @@ class Trainer:
         return self.metrics
 
     def save(self, epoch, step, config, save_freq=300, interm_epoch=5):
-
         # save every save_freq steps, so that training can be resumed if one epoch takes a long time
-        if not ((((step + 1) % save_freq == 0) or step == self.n_batches - 1) and self.rank == 0):
+        if not ((((step + 1) % save_freq == 0) or step == self.n_batches - 1)):
             return
 
         state_dict = {'state_dict': (self._model.module if hasattr(self._model, 'module')
