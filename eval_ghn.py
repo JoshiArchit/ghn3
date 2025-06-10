@@ -31,7 +31,7 @@ from ppuda.utils import infer, AvgrageMeter, adjust_net
 from ppuda.vision.loader import image_loader
 from ghn3 import from_pretrained, get_metadata, DeepNets1MDDP
 from ghn3.ops import Network
-
+from torch.utils.tensorboard import SummaryWriter
 
 parser = argparse.ArgumentParser(description='Evaluation of GHNs')
 parser.add_argument('--save_ckpt', type=str, default=None,
@@ -102,6 +102,7 @@ else:
                                         debug=args.debug > 0)
 
 start_all = time.time()
+writer = SummaryWriter(log_dir=f"runs/eval_ghn_{args.ckpt.replace('/', '_')}")
 norms_matched = []
 top1_all = AvgrageMeter('std')  # use standard deviation (std) as the dispersion measure
 for m_ind, m in enumerate(models_queue):
@@ -178,6 +179,11 @@ for m_ind, m in enumerate(models_queue):
         top1, top5 = infer(model.to(args.device), val_loader, verbose=False)
         print('\ntesting: top1={:.3f}, top5={:.3f} ({} eval samples, time={:.2f} seconds)'.format(
             top1, top5, val_loader.dataset.num_examples, time.time() - start), flush=True)
+        writer.add_scalar(f'Accuracy/Top1/{m}', top1, global_step=m_ind)
+        writer.add_scalar(f'Accuracy/Top5/{m}', top5, global_step=m_ind)
+        writer.add_scalar(f'Params/Norm/{m}', total_norm.item(), global_step=m_ind)
+        writer.add_scalar(f'Timing/EvalTimeSec/{m}', time.time() - start, global_step=m_ind)
+        writer.add_scalar(f'Params/Count_Mil/{m}', n_params, global_step=m_ind)
         top1_all.update(top1, 1)
     except Exception as e:
         print('ERROR for model %s: %s' % (m, e))
@@ -186,3 +192,6 @@ for m_ind, m in enumerate(models_queue):
     # unsupported modules are initialized using built-in PyTorch methods
 
 print(u'\nresults: (avg\u00B1std) top1={:.3f}\u00B1{:.3f}'.format(top1_all.cnt, top1_all.avg, top1_all.dispersion))
+writer.add_scalar('Summary/Top1Avg', top1_all.avg, global_step=0)
+writer.add_scalar('Summary/Top1Std', top1_all.dispersion, global_step=0)
+writer.close()
