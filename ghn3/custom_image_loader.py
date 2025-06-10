@@ -134,6 +134,10 @@ def load_images(dataset='imagenet', data_dir='./data/', test=True, im_size=32,
                                                        len(valid_data.targets),
                                                        'test' if test else 'val',
                                                        valid_data.data.mean() if hasattr(valid_data, 'data') else 0.0))
+        # Print classes chosen for training
+        if train_classes_split is not None:
+            print('classes chosen for training: {}'.format(
+                ', '.join([str(i) for i in range(train_classes_split)])))
 
     if train_data is None:
         train_loader = None
