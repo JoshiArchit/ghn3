@@ -57,7 +57,7 @@ def main():
     parser.add_argument('--interm_epoch', type=int, default=5, help='intermediate epochs to keep checkpoints for')
     parser.add_argument('--train_split', type=str, default='90', help='dataset split for training, e.g. 90 for 90% train, 10% val')
     parser.add_argument('--train_classes_split', type=str, default='all', help='number of classes to use for training')
-    parser.add_argument('--train_classes_labels', type=str, default=None, help='list of class labels to use for training, e.g. "cat,dog,bird"')
+    parser.add_argument('--train_classes_labels', nargs='+', type=str, default=None, help='list of class labels to use for training, e.g. "cat,dog,bird"')
     ghn2 = parser.parse_known_args()[0].ghn2
 
     ddp = setup_ddp()
