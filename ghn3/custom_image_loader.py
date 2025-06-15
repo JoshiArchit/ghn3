@@ -158,7 +158,7 @@ def load_images(dataset='imagenet', data_dir='./data/', test=True, im_size=32,
         # Print classes chosen for training
         if train_classes_split is not None:
             print('classes chosen for training: {}'.format(
-                ', '.join([str(i) for i in range(train_classes_split)])))
+                ', '.join([str(i) for i in train_classes_split])))
         # Print class names if provided
         if train_classes_split is not None:
             class_names_used = [k for k, v in cifar10_label_map.items() if v in train_classes_split]
