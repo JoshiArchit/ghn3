@@ -45,7 +45,7 @@ def load_images(dataset='imagenet', data_dir='./data/', test=True, im_size=32,
             transforms_train_val = transforms_imagenet(noise=noise, cifar_style=False, im_size=im_size)
         train_transform, valid_transform = transforms_train_val
 
-        imagenet_dir = os.path.join(data_dir, 'imagenet2012/tarballs')
+        imagenet_dir = os.path.join(data_dir, 'imagenet')
 
         train_data = ImageNetDataset(imagenet_dir, 'train', transform=train_transform, has_validation=not test)
         valid_data = ImageNetDataset(imagenet_dir, 'val', transform=valid_transform, has_validation=not test)
