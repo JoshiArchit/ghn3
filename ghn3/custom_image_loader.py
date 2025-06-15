@@ -141,7 +141,7 @@ def load_images(dataset='imagenet', data_dir='./data/', test=True, im_size=32,
             train_data.num_examples = len(train_data.targets)
 
             shuffle_val = False
-            n_classes = train_classes_split if train_classes_split is not None else len(set(targets.tolist()))
+            n_classes = len(train_classes_split) if train_classes_split is not None else len(set(targets.tolist()))
             generator = None
             valid_data.checksum = valid_data.data.mean()
             valid_data.num_examples = len(valid_data.targets)
