@@ -20,20 +20,32 @@ def load_images(dataset='imagenet', data_dir='./data/', test=True, im_size=32,
                 batch_size=64, test_batch_size=64, num_workers=0,
                 cutout=False, cutout_length=16, noise=False,
                 seed=1111, load_train_anyway=False, n_shots=None, ddp=False, transforms_train_val=None,
-                verbose=True, train_split=90, train_split_classes='all'):
+                verbose=True, train_split=90, train_split_classes='all', train_class_names=None):
     """
     Custom data loader with support for class-based and split-based filtering.
     """
     train_data = None
     train_classes_split = int(train_split_classes) if train_split_classes != 'all' else None
     train_ratio = float(train_split) / 100.0
+    cifar10_label_map = {
+        'airplane': 0,
+        'automobile': 1,
+        'bird': 2,
+        'cat': 3,
+        'deer': 4,
+        'dog': 5,
+        'frog': 6,
+        'horse': 7,
+        'ship': 8,
+        'truck': 9
+    }
 
     if dataset.lower() == 'imagenet':
         if transforms_train_val is None:
             transforms_train_val = transforms_imagenet(noise=noise, cifar_style=False, im_size=im_size)
         train_transform, valid_transform = transforms_train_val
 
-        imagenet_dir = os.path.join(data_dir, 'imagenet')
+        imagenet_dir = os.path.join(data_dir, 'imagenet2012')
 
         train_data = ImageNetDataset(imagenet_dir, 'train', transform=train_transform, has_validation=not test)
         valid_data = ImageNetDataset(imagenet_dir, 'val', transform=valid_transform, has_validation=not test)
@@ -88,9 +100,18 @@ def load_images(dataset='imagenet', data_dir='./data/', test=True, im_size=32,
             targets = torch.tensor(train_data.targets)
             data = train_data.data
 
+            # If specific class names are provided, filter the dataset
+            if train_class_names is not None:
+                train_classes_split = sorted(
+                    [cifar10_label_map[name] for name in train_class_names])
+            elif train_classes_split != 'all':
+                train_classes_split = list(range(int(train_split_classes)))
+            else:
+                train_classes_split = None
+
             # Class filtering
             if train_classes_split is not None:
-                class_mask = torch.isin(targets, torch.arange(train_classes_split))
+                class_mask = torch.isin(targets, torch.tensor(train_classes_split))
                 indices = torch.nonzero(class_mask).squeeze()
 
                 data = data[indices]
@@ -138,6 +159,10 @@ def load_images(dataset='imagenet', data_dir='./data/', test=True, im_size=32,
         if train_classes_split is not None:
             print('classes chosen for training: {}'.format(
                 ', '.join([str(i) for i in range(train_classes_split)])))
+        # Print class names if provided
+        if train_classes_split is not None:
+            class_names_used = [k for k, v in cifar10_label_map.items() if v in train_classes_split]
+            print('classes chosen for training: {}'.format(', '.join(class_names_used)))
 
     if train_data is None:
         train_loader = None
