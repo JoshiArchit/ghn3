@@ -20,7 +20,7 @@ def load_images(dataset='imagenet', data_dir='./data/', test=True, im_size=32,
                 batch_size=64, test_batch_size=64, num_workers=0,
                 cutout=False, cutout_length=16, noise=False,
                 seed=1111, load_train_anyway=False, n_shots=None, ddp=False, transforms_train_val=None,
-                verbose=True, train_split=90, train_split_classes='all', train_class_names=None):
+                verbose=True, train_split=90, train_split_classes='all', train_class_labels=None):
     """
     Custom data loader with support for class-based and split-based filtering.
     """
@@ -101,9 +101,9 @@ def load_images(dataset='imagenet', data_dir='./data/', test=True, im_size=32,
             data = train_data.data
 
             # If specific class names are provided, filter the dataset
-            if train_class_names is not None:
+            if train_class_labels is not None:
                 train_classes_split = sorted(
-                    [cifar10_label_map[name] for name in train_class_names])
+                    [cifar10_label_map[name] for name in train_class_labels])
             elif train_classes_split != 'all':
                 train_classes_split = list(range(int(train_split_classes)))
             else:
