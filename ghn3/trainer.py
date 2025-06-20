@@ -313,6 +313,7 @@ class Trainer:
                         raise
                     y = out[0] if isinstance(out, tuple) else out
 
+                    assert y.shape == (targets.shape[0], model.num_classes)
                     print("Sample targets:", targets[:10])
                     print("Target dtype:", targets.dtype)
                     print("Target shape:", targets.shape)
