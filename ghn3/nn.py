@@ -55,6 +55,8 @@ def from_pretrained(ghn3_name='ghn3xlm16.pt', **kwargs):
         state_dict = state_dict['state_dict']
 
     is_ghn2 = np.any([p_name.find('gnn.gru.') >= 0 for p_name in state_dict.keys()])
+    print(f"[GHN3 Config] : {ghn_config}")
+    print(f"NUM CLASSES : {ghn_config['num_classes'] if ghn_config is not None else 'not specified'}")
 
     if ghn_config is None:
         # infer GHN config from the state_dict assuming some default values
