@@ -104,8 +104,8 @@ def load_images(dataset='imagenet', data_dir='./data/', test=True, im_size=32,
             if train_class_labels is not None:
                 train_classes_split = sorted(
                     [cifar10_label_map[name] for name in train_class_labels])
-            elif train_classes_split != 'all':
-                train_classes_split = list(range(int(train_split_classes)))
+            elif train_classes_split is not None:
+                train_classes_split = list(range(train_classes_split))
             else:
                 train_classes_split = None
 
