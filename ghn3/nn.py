@@ -138,9 +138,11 @@ class GHN3(GHN):
     """
 
     def __init__(self, max_shape, num_classes, hid, heads=8, layers=3, is_ghn2=False, pretrained=False, **kwargs):
+        self.num_classes = num_classes
 
         act_layer = kwargs.pop('act_layer', nn.GELU)
         super().__init__(max_shape, num_classes, hid=hid, **kwargs)
+        print(f"[GHN3 INIT] num_classes = {self.num_classes}, C = {self.C}")
 
         self._is_ghn2 = is_ghn2
         if not self._is_ghn2:
