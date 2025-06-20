@@ -58,7 +58,7 @@ def from_pretrained(ghn3_name='ghn3xlm16.pt', **kwargs):
 
     if ghn_config is None:
         # infer GHN config from the state_dict assuming some default values
-
+        print("[WARNING] 'num_classes' not passed. Defaulting to 10.")
         num_classes = kwargs.pop('num_classes', 10)
         layers = kwargs.pop('layers', 0)
         hid = kwargs.pop('hid', 32)
