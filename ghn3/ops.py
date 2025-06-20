@@ -422,7 +422,7 @@ def create_ops(light):
                      auxiliary=False,
                      ):
             super().__init__()
-
+            self.num_classes = num_classes
             self.genotype = genotype
             self._C = C
             self._auxiliary = auxiliary
