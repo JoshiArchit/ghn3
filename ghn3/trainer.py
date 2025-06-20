@@ -312,6 +312,19 @@ class Trainer:
                         print(model)
                         raise
                     y = out[0] if isinstance(out, tuple) else out
+
+                    print("Sample targets:", targets[:10])
+                    print("Target dtype:", targets.dtype)
+                    print("Target shape:", targets.shape)
+                    print("Model output shape (logits):", y.shape)
+
+                    # Ensure target dtype
+                    assert targets.dtype == torch.long, f"targets must be LongTensor, got {targets.dtype}"
+
+                    # Sanity check: targets should be between 0 and num_classes - 1
+                    assert targets.min() >= 0, f"Invalid label found: min={targets.min()}"
+                    assert targets.max() < self.criterion.num_classes, f"Invalid label found: max={targets.max()} >= num_classes"
+
                     loss += self.criterion(y, targets)
                     if self.auxiliary:
                         loss += self.auxiliary_weight * self.criterion(out[1], targets)
