@@ -50,6 +50,7 @@ def main():
     parser.add_argument('--ghn2', action='store_true', help='train GHN-2, also can use code from'
                                                             ' https://github.com/facebookresearch/ppuda to train GHN-2')
     parser.add_argument('--interm_epoch', type=int, default=5, help='intermediate epochs to keep checkpoints for')
+    parser.add_argument('--warmup_epochs', type=int, default=0, help='number of warmup epochs for cosine-warmup scheduler')
     ghn2 = parser.parse_known_args()[0].ghn2
 
     ddp = setup_ddp()
@@ -100,12 +101,21 @@ def main():
                                                  verbose=ddp.rank == 0,
                                                  debug=args.debug > 0,
                                                  num_classes=num_classes,)
+    # scheduler args for cosine-warmup
+    scheduler_args = {
+        'milestones': args.lr_steps,
+        'gamma': args.gamma
+    }
+
+    if args.scheduler == 'cosine-warmup':
+        scheduler_args['warmup_epochs'] = args.warmup_epochs if args.warmup_epochs > 0 else 0
+        scheduler_args['total_epochs'] = args.epochs
 
     trainer = Trainer(ghn,
                       opt=args.opt,
                       opt_args={'lr': args.lr, 'weight_decay': args.wd, 'momentum': args.momentum},
                       scheduler='mstep' if args.scheduler is None else args.scheduler,
-                      scheduler_args={'milestones': args.lr_steps, 'gamma': args.gamma},
+                      scheduler_args=scheduler_args,
                       n_batches=len(train_queue),
                       grad_clip=args.grad_clip,
                       device=args.device,
