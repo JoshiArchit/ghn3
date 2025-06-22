@@ -35,6 +35,7 @@ class DeepNets1MDDP(DeepNets1M):
                  wider_nets=True,
                  debug=False,
                  **kwargs):
+        self.num_classes = kwargs.pop("num_classes", 1000 if kwargs.get('large_images', True) else 10)
         if 'nets_dir' in kwargs and kwargs['nets_dir'] != './data':
             # Reset to a local ./data folder if hdf5 is not found in nets_dir (handles some complicated cluster setups)
             nets_dir = kwargs['nets_dir']
@@ -147,7 +148,7 @@ class DeepNets1MDDP(DeepNets1M):
             graph.net_idx = idx
             if self.is_train and not self.debug:
                 graph.net = NetworkLight(is_imagenet_input=self.large_images,
-                                         num_classes=1000 if self.large_images else 10,
+                                         num_classes=self.num_classes,
                                          **net_args)
 
         return graph

@@ -98,7 +98,8 @@ def main():
                                                  num_nets=args.num_nets,
                                                  large_images=is_imagenet,
                                                  verbose=ddp.rank == 0,
-                                                 debug=args.debug > 0)
+                                                 debug=args.debug > 0,
+                                                 num_classes=num_classes,)
 
     trainer = Trainer(ghn,
                       opt=args.opt,
