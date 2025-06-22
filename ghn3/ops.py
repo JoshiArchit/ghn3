@@ -422,7 +422,6 @@ def create_ops(light):
                      auxiliary=False,
                      ):
             super().__init__()
-            print(f"Creating Network with C={C}, num_classes={num_classes}")
             self.num_classes = num_classes
             self.genotype = genotype
             self._C = C

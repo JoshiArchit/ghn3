@@ -314,11 +314,6 @@ class Trainer:
                     y = out[0] if isinstance(out, tuple) else out
 
                     assert y.shape == (targets.shape[0], model.num_classes)
-                    print("Sample targets:", targets[:10])
-                    print("Target dtype:", targets.dtype)
-                    print("Target shape:", targets.shape)
-                    print("Model output shape (logits):", y.shape)
-
                     loss += self.criterion(y, targets)
                     if self.auxiliary:
                         loss += self.auxiliary_weight * self.criterion(out[1], targets)
