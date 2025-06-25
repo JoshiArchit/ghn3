@@ -89,6 +89,8 @@ def main():
         train_dataset = torch.utils.data.Subset(train_dataset, sampled_indices)
         train_queue = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size,
                                                   shuffle=True, num_workers=args.num_workers)
+        log(f'sampled {len(train_dataset)} images from the training set (percentage : '
+            f'{100 * len(train_dataset) / len(train_queue.dataset):.2f}%)')
 
     hid = args.hid
     s = 16 if is_imagenet else 11
