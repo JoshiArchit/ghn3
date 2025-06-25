@@ -35,7 +35,11 @@ Example:
 
 import argparse
 import time
+from collections import defaultdict
 from functools import partial
+from random import random
+
+import torch
 from ppuda.config import init_config
 from ppuda.vision.loader import image_loader
 from ghn3 import GHN3, log, Trainer, DeepNets1MDDP, setup_ddp, clean_ddp
@@ -76,6 +80,15 @@ def main():
                                                num_workers=args.num_workers,
                                                seed=args.seed,
                                                verbose=ddp.rank == 0)
+
+    # Sample a subset of the training data
+    train_dataset = train_queue.dataset
+    if args.n_shots is not None and args.n_shots > 0:
+        log(f'sampling {args.n_shots} images per class from the training set')
+        sampled_indices = sample_subset(train_dataset, num_classes, args.n_shots, seed=args.seed)
+        train_dataset = torch.utils.data.Subset(train_dataset, sampled_indices)
+        train_queue = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size,
+                                                  shuffle=True, num_workers=args.num_workers)
 
     hid = args.hid
     s = 16 if is_imagenet else 11
@@ -153,6 +166,25 @@ def main():
     if ddp.ddp:
         clean_ddp()
 
+def sample_subset(dataset, num_classes, percent, seed=42):
+    class_to_indices = defaultdict(list)
+    # Map class indices to their data indices
+    for idx, (_, target) in enumerate(dataset):
+        class_to_indices[target].append(idx)
+
+    # Calculate samples to collect
+    num_samples = int(len(dataset) * percent / 100)
+    samples_per_class = num_samples // num_classes
+
+    sampled_indices = []
+    for cls in range(num_classes):
+        indices = class_to_indices[cls]
+        if len(indices) < samples_per_class:
+            raise ValueError(
+                f"Class {cls} has only {len(indices)} samples, but {samples_per_class} required.")
+        sampled_indices.extend(random.sample(indices, samples_per_class))
+
+    return sampled_indices
 
 if __name__ == '__main__':
     main()
