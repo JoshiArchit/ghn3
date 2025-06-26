@@ -51,6 +51,7 @@ def main():
                                                             ' https://github.com/facebookresearch/ppuda to train GHN-2')
     parser.add_argument('--interm_epoch', type=int, default=5, help='intermediate epochs to keep checkpoints for')
     parser.add_argument('--warmup_epochs', type=int, default=0, help='number of warmup epochs for cosine-warmup scheduler')
+    parser.add_argument("--n_shots", type=int, default=None)
     ghn2 = parser.parse_known_args()[0].ghn2
 
     ddp = setup_ddp()
