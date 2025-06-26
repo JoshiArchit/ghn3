@@ -76,7 +76,8 @@ def main():
                                                batch_size=args.batch_size,
                                                num_workers=args.num_workers,
                                                seed=args.seed,
-                                               verbose=ddp.rank == 0)
+                                               verbose=ddp.rank == 0,
+                                               n_shots=args.n_shots)
 
     hid = args.hid
     s = 16 if is_imagenet else 11
