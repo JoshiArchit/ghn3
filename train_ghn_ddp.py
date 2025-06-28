@@ -37,7 +37,7 @@ import argparse
 import time
 from collections import defaultdict
 from functools import partial
-from random import random
+import random
 
 import torch
 from ppuda.config import init_config
