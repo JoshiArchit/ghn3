@@ -50,6 +50,7 @@ def main():
     parser.add_argument('--ghn2', action='store_true', help='train GHN-2, also can use code from'
                                                             ' https://github.com/facebookresearch/ppuda to train GHN-2')
     parser.add_argument('--interm_epoch', type=int, default=5, help='intermediate epochs to keep checkpoints for')
+    parser.add_argument('--nets_dir', type=str, default='/shared/rc/nlagent/data', help='path to the DeepNets-1M dataset')
     ghn2 = parser.parse_known_args()[0].ghn2
 
     ddp = setup_ddp()
@@ -93,7 +94,7 @@ def main():
                                                  dense=ghn.is_dense(),
                                                  wider_nets=is_imagenet,
                                                  split=args.split,
-                                                 nets_dir=args.data_dir,
+                                                 nets_dir=args.nets_dir,
                                                  virtual_edges=args.virtual_edges,
                                                  num_nets=args.num_nets,
                                                  large_images=is_imagenet,
