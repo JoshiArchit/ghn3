@@ -60,3 +60,11 @@ class TinyImageNetDataset(Dataset):
     @property
     def num_examples(self):
         return len(self)
+
+    @property
+    def checksum(self):
+        import hashlib
+        m = hashlib.sha256()
+        for path in self.data:
+            m.update(path.encode())
+        return int(m.hexdigest(), 16)
