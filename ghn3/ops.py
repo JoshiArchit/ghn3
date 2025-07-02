@@ -526,7 +526,13 @@ def create_ops(light):
                     s = 4 if (stem_type == 1 or stem_pool) else 8
                 C_prev *= s ** 2
 
-            fc = [Linear(C_prev, fc_dim if fc_layers > 1 else num_classes)]
+            # Dynamically infer the final feature dim (in case of unexpected input size like TinyImageNet)
+            with torch.no_grad():
+                dummy_input = torch.zeros(1, 3, self.expected_input_sz, self.expected_input_sz)
+                dummy_out = self.forward_features(dummy_input)
+                flatten_dim = dummy_out.view(1, -1).shape[1]
+
+            fc = [Linear(flatten_dim, fc_dim if fc_layers > 1 else num_classes)]
             for i in range(fc_layers - 1):
                 assert fc_dim > 0, fc_dim
                 fc.append(ReLU(inplace=True))
@@ -568,12 +574,31 @@ def create_ops(light):
 
             return logits, logits_aux
 
+        def forward_features(self, input):
+            if self._is_vit:
+                s0 = self.stem0(input)
+                s0 = s1 = self.pos_enc(s0)
+            else:
+                if self._stem_type == 1:
+                    s0 = self.stem0(input)
+                    s1 = None if _is_none(self.stem1) else self.stem1(s0)
+                else:
+                    s0 = s1 = self.stem(input)
+
+            for cell_ind, cell in enumerate(self.cells):
+                s0, s1 = s1, cell(s0, s1, drop_path_prob=0.0)
+
+            out = self.global_pooling(s1) if self._glob_avg else s1
+            return out
+
     types = locals()
     types.update(transformer_types)
     del types['transformer_types'], types['OPS'], types['light'], types['bn_layer']
     if light:
         del types['modules_light']
     return types  # return the local types as a dictionary
+
+
 
 
 types_light = create_ops(light=True)
