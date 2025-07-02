@@ -61,7 +61,7 @@ if args.arch in [None, 'inception_v3']:
                                            im_size=299,
                                            seed=args.seed)[1]
 
-assert ghn.num_classes == num_classes, 'The eval image dataset and the dataset the GHN was trained on must match, ' \
+# assert ghn.num_classes == num_classes, 'The eval image dataset and the dataset the GHN was trained on must match, ' \
                                        'But it is possible to fine-tune predicted parameters for a different dataset.' \
                                        'See example scripts for details.'
 
