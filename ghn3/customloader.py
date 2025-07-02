@@ -17,7 +17,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
 
 from ppuda.vision.imagenet import ImageNetDataset
-from tinyimagenet import TinyImageNetDataset
+from .tinyimagenet import TinyImageNetDataset
 from ppuda.vision.transforms import transforms_cifar, transforms_imagenet
 
 
