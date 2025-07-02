@@ -279,6 +279,7 @@ def create_ops(light):
                 self.weight = torch.zeros(1, C, ks, ks)  # <-- FIXED
             else:
                 self.weight = nn.Parameter(torch.randn(1, C, ks, ks))
+            print(f"[DEBUG] PosEnc weight type: {type(self.weight)}")
 
         def forward(self, x):
             """
