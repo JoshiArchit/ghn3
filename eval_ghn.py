@@ -20,7 +20,6 @@ Example
     python eval_ghn.py --ckpt ./checkpoints/ghn3tm8-c10-e833cce-1111/checkpoint.pt --split predefined
 """
 
-
 import torch
 import torchvision.models as models
 import time
@@ -31,7 +30,7 @@ from ppuda.utils import infer, AvgrageMeter, adjust_net
 from ppuda.vision.loader import image_loader
 from ghn3 import from_pretrained, get_metadata, DeepNets1MDDP
 from ghn3.ops import Network
-
+from ghn3.customloader import image_loader as custom_image_loader
 
 parser = argparse.ArgumentParser(description='Evaluation of GHNs')
 parser.add_argument('--save_ckpt', type=str, default=None,
@@ -42,25 +41,25 @@ ghn = from_pretrained(args.ckpt, debug_level=args.debug).to(args.device)  # get 
 ghn.eval()  # should be a little bit more efficient in the eval mode
 is_imagenet = args.dataset.startswith('imagenet')
 print('loading the %s dataset...' % args.dataset)
-images_val, num_classes = image_loader(args.dataset,
-                                       args.data_dir,
-                                       test=True,
-                                       test_batch_size=args.test_batch_size,
-                                       num_workers=args.num_workers,
-                                       noise=args.noise,
-                                       im_size=args.imsize,
-                                       seed=args.seed)[1:]
+images_val, num_classes = custom_image_loader(args.dataset,
+                                              args.data_dir,
+                                              test=True,
+                                              test_batch_size=args.test_batch_size,
+                                              num_workers=args.num_workers,
+                                              noise=args.noise,
+                                              im_size=args.imsize,
+                                              seed=args.seed)[1:]
 
 if args.arch in [None, 'inception_v3']:
     # Create a separate loader for 299x299 images required for inception_v3
-    images_val_im299 = image_loader(args.dataset,
-                                    args.data_dir,
-                                    test=True,
-                                    test_batch_size=args.test_batch_size,
-                                    num_workers=args.num_workers,
-                                    noise=args.noise,
-                                    im_size=299,
-                                    seed=args.seed)[1]
+    images_val_im299 = custom_image_loader(args.dataset,
+                                           args.data_dir,
+                                           test=True,
+                                           test_batch_size=args.test_batch_size,
+                                           num_workers=args.num_workers,
+                                           noise=args.noise,
+                                           im_size=299,
+                                           seed=args.seed)[1]
 
 assert ghn.num_classes == num_classes, 'The eval image dataset and the dataset the GHN was trained on must match, ' \
                                        'But it is possible to fine-tune predicted parameters for a different dataset.' \
@@ -83,8 +82,9 @@ if is_torch:
             break
 
         if norms is not None and m not in norms:
-            print('=== %s was not in PyTorch at the moment of GHN-3 evaluation, so skipping it in this notebook ==='
-                  % m.upper())
+            print(
+                '=== %s was not in PyTorch at the moment of GHN-3 evaluation, so skipping it in this notebook ==='
+                % m.upper())
             continue  # skip for consistency with the paper
 
         models_queue.append(m)
@@ -142,21 +142,26 @@ for m_ind, m in enumerate(models_queue):
         start = time.time()
 
         if is_torch and not is_imagenet:
-            model = adjust_net(model, large_input=False)  # adjust the model for small images such as 32x32 in CIFAR-10
+            model = adjust_net(model,
+                               large_input=False)  # adjust the model for small images such as 32x32 in CIFAR-10
 
         with torch.no_grad():  # to improve efficiency
-            model = ghn(model, graphs=graphs, bn_track_running_stats=True, reduce_graph=True)  # predict parameters
+            model = ghn(model, graphs=graphs, bn_track_running_stats=True,
+                        reduce_graph=True)  # predict parameters
             if args.save_ckpt is not None:
                 torch.save({'state_dict': model.state_dict()}, args.save_ckpt)
                 print('\nsaved the model with predicted parameters to {}\n'.format(args.save_ckpt))
 
             model.eval()  # set to the eval mode to disable dropout, etc.
 
+
             # set BN layers to the training mode to enable eval w/o running statistics
             def bn_set_train(module):
                 if isinstance(module, torch.nn.BatchNorm2d):
                     module.track_running_stats = False
                     module.training = True
+
+
             model.apply(bn_set_train)
 
         total_norm = torch.norm(torch.stack([p.norm() for p in model.parameters()]), 2)
@@ -165,14 +170,16 @@ for m_ind, m in enumerate(models_queue):
         print('done in {:.2f} sec, total param norm={:.2f}{}'.
               format(time.time() - start,
                      total_norm.item(),
-                     '' if norms is None else ' ({})'.format('norms matched' if norms_matched[-1] else
-                                                             ('ERROR: norm not matched with %.2f' % norms[m]))))
+                     '' if norms is None else ' ({})'.format(
+                         'norms matched' if norms_matched[-1] else
+                         ('ERROR: norm not matched with %.2f' % norms[m]))))
         # The `ERROR: norm not matched` can be fine if the model has some parameters not predicted by the GHN
         # and initialized randomly instead.
 
         print('Running evaluation for %s...' % m)
         if is_imagenet:
-            val_loader.sampler.generator.manual_seed(args.seed)  # set the generator seed to reproduce ImageNet results
+            val_loader.sampler.generator.manual_seed(
+                args.seed)  # set the generator seed to reproduce ImageNet results
 
         start = time.time()
         top1, top5 = infer(model.to(args.device), val_loader, verbose=False)
@@ -185,4 +192,5 @@ for m_ind, m in enumerate(models_queue):
     # "WARNING: number of predicted ..." means that some layers in the model are not supported by the GHN
     # unsupported modules are initialized using built-in PyTorch methods
 
-print(u'\nresults: (avg\u00B1std) top1={:.3f}\u00B1{:.3f}'.format(top1_all.cnt, top1_all.avg, top1_all.dispersion))
+print(u'\nresults: (avg\u00B1std) top1={:.3f}\u00B1{:.3f}'.format(top1_all.cnt, top1_all.avg,
+                                                                  top1_all.dispersion))
