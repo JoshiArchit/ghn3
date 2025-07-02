@@ -56,3 +56,7 @@ class TinyImageNetDataset(Dataset):
         if self.transform:
             image = self.transform(image)
         return image, self.targets[idx]
+
+    @property
+    def num_examples(self):
+        return len(self)
