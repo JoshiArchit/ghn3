@@ -38,7 +38,7 @@ import time
 from functools import partial
 from ppuda.config import init_config
 from ppuda.vision.loader import image_loader
-from ghn3 import GHN3, log, Trainer, DeepNets1MDDP, setup_ddp, clean_ddp
+from ghn3 import GHN3, log, Trainer, DeepNets1MDDP, setup_ddp, clean_ddp, customloader
 
 log = partial(log, flush=True)
 
@@ -68,7 +68,7 @@ def main():
     is_imagenet = args.dataset.startswith('imagenet')
 
     log('loading the %s dataset...' % args.dataset.upper())
-    train_queue, _, num_classes = image_loader(args.dataset,
+    train_queue, _, num_classes = customloader.image_loader(args.dataset,
                                                args.data_dir,
                                                im_size=args.imsize,
                                                test=False,
