@@ -275,7 +275,10 @@ def create_ops(light):
     class PosEnc(Module):
         def __init__(self, C, ks):
             super().__init__()
-            self.weight = [1, C, ks, ks] if light else nn.Parameter(torch.randn(1, C, ks, ks))
+            if light:
+                self.weight = torch.zeros(1, C, ks, ks)  # <-- FIXED
+            else:
+                self.weight = nn.Parameter(torch.randn(1, C, ks, ks))
 
         def forward(self, x):
             """
