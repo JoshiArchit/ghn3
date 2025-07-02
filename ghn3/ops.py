@@ -447,9 +447,11 @@ def create_ops(light):
 
             # Define the stem
             if self._is_vit:
-                # Visual Transformer stem
-                self.stem0 = OPS['conv_stride'](3, C, 16 if is_imagenet_input else 3, None, None)
-                self.pos_enc = PosEnc(C, 14 if is_imagenet_input else 11)
+                stem_kernel = min(self.expected_input_sz // 4, 16)
+                posenc_dim = self.expected_input_sz // 4
+
+                self.stem0 = OPS['conv_stride'](3, C, stem_kernel, None, None)
+                self.pos_enc = PosEnc(C, posenc_dim)
 
             elif stem_type == 0:
                 # Simple stem
