@@ -37,8 +37,7 @@ import time
 from functools import partial
 from ppuda.config import init_config
 from ppuda.vision.loader import image_loader
-from ghn3 import GHN3, log, Trainer, DeepNets1MDDP, setup_ddp, clean_ddp
-from ghn3.custom_loader import image_loader as custom_image_loader
+from ghn3 import GHN3, log, Trainer, DeepNets1MDDP, setup_ddp, clean_ddp, custom_loader
 
 log = partial(log, flush=True)
 
@@ -77,16 +76,16 @@ def main():
     is_imagenet = args.dataset.startswith('imagenet')
 
     log('loading the %s dataset...' % args.dataset.upper())
-    train_queue, _, num_classes = custom_image_loader(args.dataset,
-                                                      args.data_dir,
-                                                      im_size=args.imsize,
-                                                      test=False,
-                                                      batch_size=args.batch_size,
-                                                      num_workers=args.num_workers,
-                                                      seed=args.seed,
-                                                      verbose=ddp.rank == 0,
-                                                      n_shots=args.n_shots,
-                                                      n_classes=args.n_classes)
+    train_queue, _, num_classes = custom_loader.image_loader(args.dataset,
+                                                             args.data_dir,
+                                                             im_size=args.imsize,
+                                                             test=False,
+                                                             batch_size=args.batch_size,
+                                                             num_workers=args.num_workers,
+                                                             seed=args.seed,
+                                                             verbose=ddp.rank == 0,
+                                                             n_shots=args.n_shots,
+                                                             n_classes=args.n_classes)
 
     hid = args.hid
     s = 16 if is_imagenet else 11
