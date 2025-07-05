@@ -32,31 +32,38 @@ Example:
 
 """
 
-
 import argparse
 import time
 from functools import partial
 from ppuda.config import init_config
 from ppuda.vision.loader import image_loader
 from ghn3 import GHN3, log, Trainer, DeepNets1MDDP, setup_ddp, clean_ddp
+from ghn3.custom_loader import image_loader as custom_image_loader
 
 log = partial(log, flush=True)
 
 
 def main():
     parser = argparse.ArgumentParser(description='GHN-3 training')
-    parser.add_argument('--heads', type=int, default=8, help='number of self-attention heads in GHN-3')
-    parser.add_argument('--compile', type=str, default=None, help='use pytorch2.0 compilation for potential speedup')
+    parser.add_argument('--heads', type=int, default=8,
+                        help='number of self-attention heads in GHN-3')
+    parser.add_argument('--compile', type=str, default=None,
+                        help='use pytorch2.0 compilation for potential speedup')
     parser.add_argument('--ghn2', action='store_true', help='train GHN-2, also can use code from'
                                                             ' https://github.com/facebookresearch/ppuda to train GHN-2')
-    parser.add_argument('--interm_epoch', type=int, default=5, help='intermediate epochs to keep checkpoints for')
-    parser.add_argument('--warmup_epochs', type=int, default=0, help='number of warmup epochs for cosine-warmup scheduler')
-    parser.add_argument("--n_shots", type=int, default=None)
+    parser.add_argument('--interm_epoch', type=int, default=5,
+                        help='intermediate epochs to keep checkpoints for')
+    parser.add_argument('--warmup_epochs', type=int, default=0,
+                        help='number of warmup epochs for cosine-warmup scheduler')
+    parser.add_argument("--n_shots", type=int, default=None,
+                        help="number of training images per class (for CIFAR-100 only)")
+    parser.add_argument("--n_classes", type=int, default=100,
+                        help="number of classes in the dataset (for CIFAR-100 only)")
     ghn2 = parser.parse_known_args()[0].ghn2
 
     ddp = setup_ddp()
     args = init_config(mode='train_ghn', parser=parser, verbose=ddp.rank == 0,
-                       debug=0,   # to avoid extra sanity checks and make training faster
+                       debug=0,  # to avoid extra sanity checks and make training faster
                        layers=3,  # default number of layers in GHN-3
                        shape_multiplier=2 if ghn2 else 1)  # max_shape default setting (can be overriden by --max_shape)
 
@@ -70,15 +77,16 @@ def main():
     is_imagenet = args.dataset.startswith('imagenet')
 
     log('loading the %s dataset...' % args.dataset.upper())
-    train_queue, _, num_classes = image_loader(args.dataset,
-                                               args.data_dir,
-                                               im_size=args.imsize,
-                                               test=False,
-                                               batch_size=args.batch_size,
-                                               num_workers=args.num_workers,
-                                               seed=args.seed,
-                                               verbose=ddp.rank == 0,
-                                               n_shots=args.n_shots)
+    train_queue, _, num_classes = custom_image_loader(args.dataset,
+                                                      args.data_dir,
+                                                      im_size=args.imsize,
+                                                      test=False,
+                                                      batch_size=args.batch_size,
+                                                      num_workers=args.num_workers,
+                                                      seed=args.seed,
+                                                      verbose=ddp.rank == 0,
+                                                      n_shots=args.n_shots,
+                                                      n_classes=args.n_classes)
 
     hid = args.hid
     s = 16 if is_imagenet else 11
@@ -88,21 +96,24 @@ def main():
                                                                 default_max_shape))
 
     config = {'max_shape': args.max_shape, 'num_classes': num_classes, 'hypernet': args.hypernet,
-              'decoder': args.decoder, 'weight_norm': args.weight_norm, 've': args.virtual_edges > 1,
-              'layernorm': args.ln, 'hid': hid, 'layers': args.layers, 'heads': args.heads, 'is_ghn2': ghn2}
+              'decoder': args.decoder, 'weight_norm': args.weight_norm,
+              've': args.virtual_edges > 1,
+              'layernorm': args.ln, 'hid': hid, 'layers': args.layers, 'heads': args.heads,
+              'is_ghn2': ghn2}
 
     ghn = GHN3(**config, debug_level=args.debug)
-    graphs_queue, sampler = DeepNets1MDDP.loader(args.meta_batch_size // (ddp.world_size if ddp.ddp else 1),
-                                                 dense=ghn.is_dense(),
-                                                 wider_nets=is_imagenet,
-                                                 split=args.split,
-                                                 nets_dir=args.data_dir,
-                                                 virtual_edges=args.virtual_edges,
-                                                 num_nets=args.num_nets,
-                                                 large_images=is_imagenet,
-                                                 verbose=ddp.rank == 0,
-                                                 debug=args.debug > 0,
-                                                 num_classes=num_classes,)
+    graphs_queue, sampler = DeepNets1MDDP.loader(
+        args.meta_batch_size // (ddp.world_size if ddp.ddp else 1),
+        dense=ghn.is_dense(),
+        wider_nets=is_imagenet,
+        split=args.split,
+        nets_dir=args.data_dir,
+        virtual_edges=args.virtual_edges,
+        num_nets=args.num_nets,
+        large_images=is_imagenet,
+        verbose=ddp.rank == 0,
+        debug=args.debug > 0,
+        num_classes=num_classes, )
     # scheduler args for cosine-warmup
     scheduler_args = {
         'milestones': args.lr_steps,
@@ -123,7 +134,7 @@ def main():
                       device=args.device,
                       log_interval=args.log_interval,
                       amp=args.amp,
-                      amp_min_scale=1024,       # this helped stabilize AMP training
+                      amp_min_scale=1024,  # this helped stabilize AMP training
                       amp_growth_interval=100,  # this helped stabilize AMP training
                       predparam_wd=0 if ghn2 else 3e-5,
                       label_smoothing=0.1 if is_imagenet else 0.0,
@@ -133,7 +144,8 @@ def main():
                       verbose=ddp.rank == 0,
                       compile_mode=args.compile)
 
-    log('\nStarting training GHN with {} parameters!'.format(sum([p.numel() for p in ghn.parameters()])))
+    log('\nStarting training GHN with {} parameters!'.format(
+        sum([p.numel() for p in ghn.parameters()])))
     if ddp.ddp:
         # make sure sample order is different for each seed
         sampler.sampler.seed = args.seed
@@ -150,7 +162,8 @@ def main():
 
         for step, (images, targets) in enumerate(train_queue, start=trainer.start_step):
 
-            if step >= len(train_queue):  # if we resume training from some start_step > 0, then need to break the loop
+            if step >= len(
+                    train_queue):  # if we resume training from some start_step > 0, then need to break the loop
                 break
 
             trainer.update(images, targets, graphs=next(graphs_queue))
@@ -158,7 +171,8 @@ def main():
 
             if args.save:
                 # save GHN checkpoint
-                trainer.save(epoch, step, {'args': args, 'config': config}, interm_epoch=args.interm_epoch)
+                trainer.save(epoch, step, {'args': args, 'config': config},
+                             interm_epoch=args.interm_epoch)
 
         trainer.scheduler_step()  # lr scheduler step
 
