@@ -20,11 +20,10 @@ Example
     python eval_ghn.py --ckpt ./checkpoints/ghn3tm8-c10-e833cce-1111/checkpoint.pt --split predefined
 """
 
-
+import warnings
+warnings.filterwarnings("ignore", message=".*not adapted for small inputs*")
 import torch
 import torchvision.models as models
-import warnings
-warnings.filterwarnings("ignore", message=".*not adapted for small inputs.*")
 import time
 import argparse
 import inspect
