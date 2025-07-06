@@ -22,6 +22,7 @@ Example
 
 import warnings
 warnings.filterwarnings("ignore", message=".*not adapted for small inputs*")
+warnings.filterwarnings("ignore", message=".*does not have a path to node*")
 import torch
 import torchvision.models as models
 import time
