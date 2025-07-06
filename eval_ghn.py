@@ -23,6 +23,8 @@ Example
 
 import torch
 import torchvision.models as models
+import warnings
+warnings.filterwarnings("ignore", message=".*not adapted for small inputs.*")
 import time
 import argparse
 import inspect
@@ -176,7 +178,7 @@ for m_ind, m in enumerate(models_queue):
 
         start = time.time()
         top1, top5 = infer(model.to(args.device), val_loader, verbose=False)
-        print('\ntesting: top1={:.3f}, top5={:.3f} ({} eval samples, time={:.2f} seconds)'.format(
+        print('testing: top1={:.3f}, top5={:.3f} ({} eval samples, time={:.2f} seconds)'.format(
             top1, top5, val_loader.dataset.num_examples, time.time() - start), flush=True)
         top1_all.update(top1, 1)
     except Exception as e:
