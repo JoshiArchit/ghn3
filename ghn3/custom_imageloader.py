@@ -23,8 +23,8 @@ import torch
 from torchvision.datasets import *
 from torch.utils.data import DataLoader
 from torch.utils.data.distributed import DistributedSampler
-from .transforms import transforms_cifar, transforms_imagenet
-from .imagenet import ImageNetDataset
+from ppuda.vision.transforms import transforms_cifar, transforms_imagenet
+from ppuda.vision.imagenet import ImageNetDataset
 from collections import defaultdict
 import random
 
