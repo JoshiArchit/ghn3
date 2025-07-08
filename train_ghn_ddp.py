@@ -86,16 +86,16 @@ def main():
                                                                   verbose=ddp.rank == 0,
                                                                   n_shots=args.n_shots)
 
-    # Sample a subset of the training data
-    train_dataset = train_queue.dataset
-    if args.n_shots is not None and args.n_shots > 0:
-        log(f'sampling {args.n_shots} images per class from the training set')
-        sampled_indices = sample_subset(train_dataset, num_classes, args.n_shots, seed=args.seed)
-        train_dataset = torch.utils.data.Subset(train_dataset, sampled_indices)
-        train_queue = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size,
-                                                  shuffle=True, num_workers=args.num_workers)
-        log(f'sampled {len(train_dataset)} images from the training set (percentage : '
-            f'{100 * len(train_dataset) / len(train_queue.dataset):.2f}%)')
+    # # Sample a subset of the training data
+    # train_dataset = train_queue.dataset
+    # if args.n_shots is not None and args.n_shots > 0:
+    #     log(f'sampling {args.n_shots} images per class from the training set')
+    #     sampled_indices = sample_subset(train_dataset, num_classes, args.n_shots, seed=args.seed)
+    #     train_dataset = torch.utils.data.Subset(train_dataset, sampled_indices)
+    #     train_queue = torch.utils.data.DataLoader(train_dataset, batch_size=args.batch_size,
+    #                                               shuffle=True, num_workers=args.num_workers)
+    #     log(f'sampled {len(train_dataset)} images from the training set (percentage : '
+    #         f'{100 * len(train_dataset) / len(train_queue.dataset):.2f}%)')
 
     hid = args.hid
     s = 16 if is_imagenet else 11
