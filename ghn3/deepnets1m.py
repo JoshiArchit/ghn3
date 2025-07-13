@@ -45,6 +45,7 @@ class DeepNets1MDDP(DeepNets1M):
                 kwargs['nets_dir'] = './data'
             log('DeepNets1MDDP nets_dir set to %s as deepnets1m files not found at %s' % (kwargs['nets_dir'], nets_dir))
 
+        self.num_classes = kwargs.get('num_classes', 1000)  # default to ImageNet
         super(DeepNets1MDDP, self).__init__(**kwargs)
         self.wider_nets = wider_nets
         self.dense = dense
@@ -147,7 +148,7 @@ class DeepNets1MDDP(DeepNets1M):
             graph.net_idx = idx
             if self.is_train and not self.debug:
                 graph.net = NetworkLight(is_imagenet_input=self.large_images,
-                                         num_classes=1000 if self.large_images else 200,
+                                         num_classes=self.num_classes,
                                          **net_args)
 
         return graph

@@ -99,7 +99,8 @@ else:
                                         virtual_edges=50 if ghn.ve else 1,
                                         large_images=is_imagenet,
                                         verbose=True,
-                                        debug=args.debug > 0)
+                                        debug=args.debug > 0,
+                                        num_classes=num_classes)
 
 start_all = time.time()
 norms_matched = []
