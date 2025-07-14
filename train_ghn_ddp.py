@@ -164,7 +164,7 @@ def main():
         # for each DeepNets1MDDP epoch, the graph loader will be shuffled inside the ghn3/deepnets1m.py
 
     graphs_queue = iter(graphs_queue)
-    nets_queue = (g.net for g in graphs_queue)
+    nets_queue = (g.nets for g in graphs_queue)
 
     for epoch in range(trainer.start_epoch, args.epochs):
 
