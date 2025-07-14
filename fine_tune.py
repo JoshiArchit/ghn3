@@ -9,7 +9,7 @@ import argparse
 import torch, torchvision
 from torch.utils.data import DataLoader
 from ppuda.config import init_config
-from ghn3 import from_pretrained, Graph, Logger
+from ghn3 import from_pretrained, Graph, Logger, custom_loader
 
 # --------------- 1. Args -------------------
 parser = argparse.ArgumentParser(description='GHN-3 fine-tuning for CIFAR-10')
@@ -19,15 +19,25 @@ args_raw = parser.parse_args()
 args = init_config(mode='train_ghn', ckpt=args_raw.ckpt, debug=0)
 
 # --------------- 2. CIFAR-10 loader -------------------
-tf = torchvision.transforms.Compose([
-    torchvision.transforms.RandomCrop(32, padding=4),
-    torchvision.transforms.RandomHorizontalFlip(),
-    torchvision.transforms.ToTensor(),
-    torchvision.transforms.Normalize((0.491, 0.482, 0.447),
-                                     (0.247, 0.243, 0.262)),
-])
-trainset = torchvision.datasets.CIFAR10(root="~/data", train=True, download=True, transform=tf)
-trainloader = DataLoader(trainset, batch_size=128, shuffle=True, num_workers=4)
+# tf = torchvision.transforms.Compose([
+#     torchvision.transforms.RandomCrop(32, padding=4),
+#     torchvision.transforms.RandomHorizontalFlip(),
+#     torchvision.transforms.ToTensor(),
+#     torchvision.transforms.Normalize((0.491, 0.482, 0.447),
+#                                      (0.247, 0.243, 0.262)),
+# ])
+# trainset = torchvision.datasets.CIFAR10(root="~/data", train=True, download=True, transform=tf)
+# trainloader = DataLoader(trainset, batch_size=128, shuffle=True, num_workers=4)
+# return train_loader, valid_loader, n_classes
+trainloader, _, num_classes = custom_loader.image_loader(args.dataset,
+                                                             args.data_dir,
+                                                             im_size=args.imsize,
+                                                             test=False,
+                                                             batch_size=args.batch_size,
+                                                             num_workers=args.num_workers,
+                                                             seed=args.seed,
+                                                             n_shots=args.n_shots,
+                                                             n_classes=args.n_classes)
 
 # --------------- 3. Setup GHN -------------------
 device = args.device
@@ -40,39 +50,13 @@ logger = Logger(args.epochs * len(trainloader))
 # --------------- 4. Valid torchvision models -------------------
 ARCH_POOL = [
     lambda: torchvision.models.resnet18(num_classes=10),
-    lambda: torchvision.models.mobilenet_v2(num_classes=10),
     lambda: torchvision.models.densenet121(num_classes=10),
-    lambda: torchvision.models.vgg11(num_classes=10),
-    lambda: torchvision.models.convnext_tiny(num_classes=10),
-    lambda: torchvision.models.efficientnet_b0(num_classes=10),
-    lambda: torchvision.models.shufflenet_v2_x1_0(num_classes=10),
-    lambda: torchvision.models.squeezenet1_0(num_classes=10),
-    lambda: torchvision.models.alexnet(num_classes=10),
-    lambda: torchvision.models.wide_resnet50_2(num_classes=10),
-    lambda: torchvision.models.regnet_y_400mf(num_classes=10),
-    lambda: torchvision.models.mnasnet1_0(num_classes=10),
-    lambda: torchvision.models.vit_b_16(num_classes=10),
-    lambda: torchvision.models.vit_l_16(num_classes=10),
-    lambda: torchvision.models.vit_h_14(num_classes=10),
-    lambda: torchvision.models.resnext50_32x4d(num_classes=10),
-    lambda: torchvision.models.inception_v3(num_classes=10, aux_logits=False),
-    lambda: torchvision.models.googlenet(num_classes=10),
     lambda: torchvision.models.mobilenet_v3_small(num_classes=10),
-    lambda: torchvision.models.mobilenet_v3_large(num_classes=10),
-    lambda: torchvision.models.resnet34(num_classes=10),
-    lambda: torchvision.models.resnet50(num_classes=10),
-    lambda: torchvision.models.resnet101(num_classes=10),
-    lambda: torchvision.models.resnet152(num_classes=10),
-    lambda: torchvision.models.vgg16(num_classes=10),
-    lambda: torchvision.models.vgg19(num_classes=10),
-    lambda: torchvision.models.squeezenet1_1(num_classes=10),
-    lambda: torchvision.models.mnasnet0_5(num_classes=10),
-    lambda: torchvision.models.mnasnet0_75(num_classes=10),
-    lambda: torchvision.models.mnasnet1_3(num_classes=10),
-    lambda: torchvision.models.mnasnet1_0(num_classes=10),
-    lambda: torchvision.models.vit_b_32(num_classes=10),
-    lambda: torchvision.models.vit_l_32(num_classes=10),
+    lambda: torchvision.models.shufflenet_v2_x0_5(num_classes=10),
+    lambda: torchvision.models.squeezenet1_0(num_classes=10),
+    # Avoid Inception, ConvNeXt, EfficientNet, etc. unless you resize input
 ]
+
 
 def random_templates(k, device):
     models, graphs = [], []
