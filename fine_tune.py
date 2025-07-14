@@ -91,7 +91,7 @@ for epoch in range(args.epochs):
         optim.zero_grad()
 
         # meta-batch of K architectures
-        templates, graphs = random_templates(args.meta_batch, device)
+        templates, graphs = random_templates(8, device)
         loss_sum = 0.
 
         for model, graph in zip(templates, graphs):
