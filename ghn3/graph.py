@@ -311,6 +311,7 @@ class Graph:
 
         assert node_feat is None or model is None, 'either model or other arguments must be specified'
 
+        self.A = A
         self.model = model
         self._list_all_nodes = list_all_nodes  # True in case of dataset generation
         self._verbose = verbose

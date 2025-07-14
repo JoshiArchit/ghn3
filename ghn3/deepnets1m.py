@@ -15,8 +15,10 @@ import networkx as nx
 import h5py
 import os
 from functools import partial
+
+import torchvision
 from torch.utils.data.distributed import DistributedSampler
-from ppuda.utils import rand_choice
+from ppuda.utils import rand_choice, adjust_net
 from ppuda.deepnets1m.genotypes import from_dict, PRIMITIVES_DEEPNETS1M
 from ppuda.deepnets1m.loader import DeepNets1M, NetBatchSampler, MAX_NODES_BATCH
 from .graph import Graph, GraphBatch
@@ -24,6 +26,58 @@ from .utils import log
 from .ddp_utils import is_ddp
 from .ops import NetworkLight
 
+_TORCHVISION_MODEL_NAMES = [
+    # Classic CNN families
+    'alexnet',
+    'vgg11', 'vgg11_bn', 'vgg13', 'vgg13_bn', 'vgg16', 'vgg16_bn',
+   'vgg19', 'vgg19_bn',
+   'resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152',
+    'resnext50_32x4d', 'resnext101_32x8d',
+    'wide_resnet50_2', 'wide_resnet101_2',
+    'squeezenet1_0', 'squeezenet1_1',
+    'densenet121', 'densenet161', 'densenet169', 'densenet201',
+    'inception_v3', 'googlenet',
+    'shufflenet_v2_x0_5', 'shufflenet_v2_x1_0', 'shufflenet_v2_x1_5',
+    'shufflenet_v2_x2_0',
+    'mobilenet_v2', 'mobilenet_v3_large', 'mobilenet_v3_small',
+    'mnasnet0_5', 'mnasnet0_75', 'mnasnet1_0', 'mnasnet1_3',
+   # EfficientNet / RegNet
+   'efficientnet_b0', 'efficientnet_b1', 'efficientnet_b2', 'efficientnet_b3',    'efficientnet_b4', 'efficientnet_b5', 'efficientnet_b6', 'efficientnet_b7',
+    'efficientnet_v2_s', 'efficientnet_v2_m', 'efficientnet_v2_l',
+    'regnet_y_400mf', 'regnet_y_800mf', 'regnet_y_1_6gf', 'regnet_y_3_2gf',
+   'regnet_y_8gf', 'regnet_y_16gf', 'regnet_y_32gf', 'regnet_y_128gf',
+    'regnet_x_400mf', 'regnet_x_800mf', 'regnet_x_1_6gf', 'regnet_x_3_2gf',    'regnet_x_8gf', 'regnet_x_16gf', 'regnet_x_32gf',
+    # ConvNeXt
+   'convnext_tiny', 'convnext_small', 'convnext_base', 'convnext_large',
+    # ViT / Swin / MaxViT / CoAtNet
+    'vit_b_16', 'vit_b_32', 'vit_l_16', 'vit_l_32',
+    'swin_t', 'swin_s', 'swin_b',
+   'swin_v2_t', 'swin_v2_s', 'swin_v2_b',
+    'maxvit_t',
+    'coatnet_0_5t', 'coatnet_1_0s', 'coatnet_2_5s'
+]
+
+def _build_torchvision_graphs(large_images: bool = True):
+    """Return a list[Graph] (one per model name in _TORCHVISION_MODEL_NAMES)."""
+    graphs = []
+    num_classes = 1000 if large_images else 10
+
+    for idx, arch in enumerate(_TORCHVISION_MODEL_NAMES):
+        # some models (Inception/GoogLeNet) need aux_logits disabled in eval mode
+        if arch in {'inception_v3', 'googlenet'}:
+            model = torchvision.models.__dict__[arch](num_classes=num_classes,
+                                                      aux_logits=False)
+        else:
+            model = torchvision.models.__dict__[arch](num_classes=num_classes)
+
+        # keep ppuda's adjust_net for ResNet-style first-conv fix
+        if arch.startswith('resnet'):
+            model = adjust_net(model, large_input=large_images)
+
+        graphs.append(Graph(model,
+                            net_args={'genotype': arch},
+                            net_idx=idx))
+    return graphs
 
 class DeepNets1MDDP(DeepNets1M):
     r"""
@@ -35,6 +89,10 @@ class DeepNets1MDDP(DeepNets1M):
                  wider_nets=True,
                  debug=False,
                  **kwargs):
+        self.torch_mode = False
+        if kwargs.get('split') == 'torch':
+            kwargs['split'] = 'predefined'
+            self.torch_mode = True
         if 'nets_dir' in kwargs and kwargs['nets_dir'] != './data':
             # Reset to a local ./data folder if hdf5 is not found in nets_dir (handles some complicated cluster setups)
             nets_dir = kwargs['nets_dir']
@@ -65,11 +123,9 @@ class DeepNets1MDDP(DeepNets1M):
 
             self.primitives_ext = dict_to_list(self.primitives_ext)
             self.op_names_net = dict_to_list(self.op_names_net)
-        elif self.split == 'torch':
-            # For predefined networks, use the same primitives as in the original code
-            self.primitives_dict = {op[:4]: i for i, op in enumerate(PRIMITIVES_DEEPNETS1M)}
-            self.primitives_ext = PRIMITIVES_DEEPNETS1M
-            self.op_names_net = PRIMITIVES_DEEPNETS1M
+        elif self.split == 'predifined' and self.torch_mode:
+            self.nets = _build_torchvision_graphs(self.large_images)
+            self.nodes = np.array([g.A.shape[0] for g in self.nets])
 
 
     @staticmethod
