@@ -15,6 +15,7 @@ from ghn3 import from_pretrained, Graph, Logger, custom_loader
 parser = argparse.ArgumentParser(description='GHN-3 fine-tuning for CIFAR-10')
 parser.add_argument('--ckpt', type=str, required=True, help='Path to GHN-3 checkpoint')
 parser.add_argument('--epochs', type=int, default=5)
+parser.add_argument('--batch_size', type=int, default=8, help='Batch size for training')
 args_raw = parser.parse_args()
 args = init_config(mode='train_ghn', ckpt=args_raw.ckpt, debug=0)
 
@@ -81,7 +82,7 @@ for epoch in range(args.epochs):
             loss = crit(logits, labels)
             loss_sum += loss
 
-        loss_sum = loss_sum / args.meta_batch
+        loss_sum = loss_sum / args.batch_size  # average loss over the batch
         loss_sum.backward()
         torch.nn.utils.clip_grad_norm_(ghn.parameters(), 5)
         optim.step()
