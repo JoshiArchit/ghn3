@@ -123,6 +123,12 @@ def main():
         verbose=ddp.rank == 0,
         debug=args.debug > 0)
 
+    # Print graphs
+    print("[DEBUG] Graphs in the queue:")
+    for graph in graphs_queue:
+        print(graph)
+
+
     trainer = Trainer(ghn,
                       opt=args.opt,
                       opt_args={'lr': args.lr, 'weight_decay': args.wd, 'momentum': args.momentum},
