@@ -142,9 +142,10 @@ for m_ind, m in enumerate(models_queue):
             torch.cuda.synchronize()
         start = time.time()
 
-        if is_torch and not is_imagenet:
-            model = adjust_net(model,
-                               large_input=False)  # adjust the model for small images such as 32x32 in CIFAR-10
+        model = adjust_net(model, large_input=is_imagenet)  # adjust the model for large images such as 224x224 in ImageNet
+        # if is_torch and not is_imagenet:
+        #     model = adjust_net(model,
+        #                        large_input=False)  # adjust the model for small images such as 32x32 in CIFAR-10
 
         with torch.no_grad():  # to improve efficiency
             model = ghn(model, graphs=graphs, bn_track_running_stats=True,
