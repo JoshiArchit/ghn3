@@ -115,6 +115,9 @@ for m_ind, m in enumerate(models_queue):
                 m = m.net_args[0]['genotype']
             kw_args = {'init_weights': False} if m in ['googlenet', 'inception_v3'] else {}
             model = eval(f'models.{m}(num_classes=num_classes, **kw_args)').to(args.device)
+            print(f'[DEBUG] {m}: final layer out_features =',
+                  model.fc.out_features if hasattr(model, "fc")
+                  else model.classifier[-1].out_features)
             if not isinstance(model, torch.nn.Module):
                 print('skipping %s, because it is not torch.nn.Module' % m)
                 continue
@@ -162,6 +165,12 @@ for m_ind, m in enumerate(models_queue):
                     module.training = True
             model.apply(bn_set_train)
 
+        with torch.no_grad():
+            predicted = sum(
+                p.requires_grad is False and p.sum().abs() > 0 for p in model.parameters())
+            total = sum(1 for _ in model.parameters())
+            print(f'[DEBUG] {m}: predicted {predicted}/{total} tensors')
+
         total_norm = torch.norm(torch.stack([p.norm() for p in model.parameters()]), 2)
         if norms is not None:
             norms_matched.append(abs(norms[m] - total_norm.item()) < 1e-2)
@@ -174,6 +183,12 @@ for m_ind, m in enumerate(models_queue):
         # and initialized randomly instead.
 
         print('Running evaluation for %s...' % m)
+
+        with torch.no_grad():
+            x, _ = next(iter(val_loader))
+            y = model(x.to(args.device))
+            print('[DEBUG] first-image logits std =', y[0].std().item())
+
         if is_imagenet:
             val_loader.sampler.generator.manual_seed(args.seed)  # set the generator seed to reproduce ImageNet results
 
