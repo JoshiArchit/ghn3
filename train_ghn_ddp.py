@@ -111,7 +111,7 @@ def main():
               'is_ghn2': ghn2}
 
     ghn = GHN3(**config, debug_level=args.debug)
-    graphs_queue, sampler = DeepNets1MDDP.loader(
+    result = DeepNets1MDDP.loader(
         args.meta_batch_size // (ddp.world_size if ddp.ddp else 1),
         dense=ghn.is_dense(),
         wider_nets=is_imagenet,
@@ -122,6 +122,12 @@ def main():
         large_images=is_imagenet,
         verbose=ddp.rank == 0,
         debug=args.debug > 0)
+
+    if isinstance(result, tuple):
+        graphs_queue, sampler = result
+    else:
+        graphs_queue = result
+        sampler = None  # or skip it
 
     # Print graphs
     print("[DEBUG] Graphs in the queue:")
