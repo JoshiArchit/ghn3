@@ -164,6 +164,7 @@ def main():
         # for each DeepNets1MDDP epoch, the graph loader will be shuffled inside the ghn3/deepnets1m.py
 
     graphs_queue = iter(graphs_queue)
+    nets_queue = (g.net for g in graphs_queue)
 
     for epoch in range(trainer.start_epoch, args.epochs):
 
@@ -177,7 +178,7 @@ def main():
                     train_queue):  # if we resume training from some start_step > 0, then need to break the loop
                 break
 
-            trainer.update(images, targets, graphs=next(graphs_queue))
+            trainer.update(images, targets, graphs=next(nets_queue))
             trainer.log(step)
 
             if args.save:
