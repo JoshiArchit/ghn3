@@ -26,7 +26,7 @@ from .utils import log
 from .ddp_utils import is_ddp
 from .ops import NetworkLight
 
-TORCHVISION_MODEL_NAMES = [
+_TORCHVISION_MODEL_NAMES = [
     # Classic CNNs
     "alexnet",
     "vgg11", "vgg11_bn", "vgg13", "vgg13_bn", "vgg16", "vgg16_bn",
