@@ -17,7 +17,7 @@ parser.add_argument('--ckpt', type=str, required=True, help='Path to GHN-3 check
 parser.add_argument('--epochs', type=int, default=5)
 parser.add_argument('--meta_batch', type=int, default=8)
 args_raw = parser.parse_args()
-args = init_config(mode='train', ckpt=args_raw.ckpt, debug=0)
+args = init_config(mode='train_ghn', ckpt=args_raw.ckpt, debug=0)
 
 # --------------- 2. CIFAR-10 loader -------------------
 tf = torchvision.transforms.Compose([
