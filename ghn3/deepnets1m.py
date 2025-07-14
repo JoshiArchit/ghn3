@@ -65,6 +65,11 @@ class DeepNets1MDDP(DeepNets1M):
 
             self.primitives_ext = dict_to_list(self.primitives_ext)
             self.op_names_net = dict_to_list(self.op_names_net)
+        elif self.split == 'torch':
+            # For predefined networks, use the same primitives as in the original code
+            self.primitives_dict = {op[:4]: i for i, op in enumerate(PRIMITIVES_DEEPNETS1M)}
+            self.primitives_ext = PRIMITIVES_DEEPNETS1M
+            self.op_names_net = PRIMITIVES_DEEPNETS1M
 
 
     @staticmethod
