@@ -153,7 +153,7 @@ class DeepNets1MDDP(DeepNets1M):
             self.op_names_net = dict_to_list(self.op_names_net)
         elif self.split == 'predefined' and self.torch_mode:
             self.nets = _build_torchvision_graphs(self.large_images)
-            self.nodes = np.array([g.A.shape[0] for g in self.nets])
+            self.nodes = np.array([g._Adj.shape[0] for g in self.nets])
 
 
     @staticmethod
