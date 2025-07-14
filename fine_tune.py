@@ -29,15 +29,7 @@ args = init_config(mode='train_ghn', ckpt=args_raw.ckpt, debug=0)
 # trainset = torchvision.datasets.CIFAR10(root="~/data", train=True, download=True, transform=tf)
 # trainloader = DataLoader(trainset, batch_size=128, shuffle=True, num_workers=4)
 # return train_loader, valid_loader, n_classes
-trainloader, _, num_classes = custom_loader.image_loader(args.dataset,
-                                                             args.data_dir,
-                                                             im_size=args.imsize,
-                                                             test=False,
-                                                             batch_size=args.batch_size,
-                                                             num_workers=args.num_workers,
-                                                             seed=args.seed,
-                                                             n_shots=args.n_shots,
-                                                             n_classes=args.n_classes)
+trainloader, _, num_classes = custom_loader.image_loader('cifar10')
 
 # --------------- 3. Setup GHN -------------------
 device = args.device
