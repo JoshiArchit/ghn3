@@ -15,7 +15,6 @@ from ghn3 import from_pretrained, Graph, Logger
 parser = argparse.ArgumentParser(description='GHN-3 fine-tuning for CIFAR-10')
 parser.add_argument('--ckpt', type=str, required=True, help='Path to GHN-3 checkpoint')
 parser.add_argument('--epochs', type=int, default=5)
-parser.add_argument('--meta_batch', type=int, default=8)
 args_raw = parser.parse_args()
 args = init_config(mode='train_ghn', ckpt=args_raw.ckpt, debug=0)
 
