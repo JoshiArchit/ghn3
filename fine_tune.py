@@ -86,5 +86,5 @@ for epoch in range(args.epochs):
         step += 1
 
 # --------------- 6. Save the new GHN -------------------
-torch.save(ghn.state_dict(), "ghn3_cifar10.pt")
-print("✅ Saved fine-tuned GHN for CIFAR-10: ghn3_cifar10.pt")
+torch.save({'state_dict': ghn.state_dict()}, "ghn3_cifar10.pt")
+print("✅ Saved fine-tuned GHN for CIFAR-10 → ghn3_cifar10.pt")
