@@ -31,7 +31,7 @@ import inspect
 from ppuda.config import init_config
 from ppuda.utils import infer, AvgrageMeter, adjust_net
 from ppuda.vision.loader import image_loader
-from ghn3 import from_pretrained, get_metadata, DeepNets1MDDP
+from ghn3 import from_pretrained, get_metadata, DeepNets1MDDP, GHN
 from ghn3.ops import Network
 
 
@@ -40,7 +40,10 @@ parser.add_argument('--save_ckpt', type=str, default=None,
                     help='checkpoint path to save the model with predicted parameters')
 args = init_config(mode='eval', parser=parser, debug=0, split='torch')
 
-ghn = from_pretrained(args.ckpt, debug_level=args.debug).to(args.device)  # get a pretrained GHN
+# Commented for transfer learning scenario as fine tuned model is saved differently
+# ghn = from_pretrained(args.ckpt, debug_level=args.debug).to(args.device)  # get a pretrained GHN
+ghn = GHN().to(args.device)
+ghn.load_state_dict(torch.load(args.ckpt, map_location=args.device))
 ghn.eval()  # should be a little bit more efficient in the eval mode
 is_imagenet = args.dataset.startswith('imagenet')
 print('loading the %s dataset...' % args.dataset)
