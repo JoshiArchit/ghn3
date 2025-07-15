@@ -42,7 +42,9 @@ args = init_config(mode='eval', parser=parser, debug=0, split='torch')
 
 # Commented for transfer learning scenario as fine tuned model is saved differently
 # ghn = from_pretrained(args.ckpt, debug_level=args.debug).to(args.device)  # get a pretrained GHN
-ghn = GHN().to(args.device)
+ghn = GHN(
+    num_classes=10,            # fine-tuned it for CIFAR-10
+    max_shape=(64, 64, 11, 11)) # default GHN shape
 ghn.load_state_dict(torch.load(args.ckpt, map_location=args.device))
 ghn.eval()  # should be a little bit more efficient in the eval mode
 is_imagenet = args.dataset.startswith('imagenet')
