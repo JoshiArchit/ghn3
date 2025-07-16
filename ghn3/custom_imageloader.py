@@ -200,7 +200,6 @@ def to_percent_shot_imagenet(dataset, percent):
 
     # sample indices per class
     selected_indices = []
-    random.seed(42)  # for reproducibility
     print(f"Subsampling ImageNet dataset to {percent*100:.2f}% of samples per class...")
     for cls, indices in class_to_indices.items():
         n = max(1, int(len(indices) * percent))  # at least one sample per class
