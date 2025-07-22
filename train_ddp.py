@@ -81,7 +81,10 @@ def main():
                                seed=args.seed,
                                verbose=ddp.rank == 0)
 
-    trainer = Trainer(eval(f'torchvision.models.{args.arch}()'),
+    model = eval(f'torchvision.models.{args.arch}(num_classes={num_classes})')
+    model.num_classes = num_classes
+
+    trainer = Trainer(model,
                       opt=args.opt,
                       opt_args={'lr': args.lr, 'weight_decay': args.wd, 'momentum': args.momentum},
                       scheduler='mstep' if args.scheduler is None else args.scheduler,
