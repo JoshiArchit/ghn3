@@ -57,7 +57,7 @@ log = partial(log, flush=True)
 
 
 def main():
-    parser = argparse.ArgumentParser(description='ImageNet training')
+    parser = argparse.ArgumentParser(description='CIFAR training')
     parser.add_argument('-c', '--compile', type=str, default=None,
                         help='use pytorch2.0 compilation for efficiency')
     parser.add_argument('--label_smooth', type=float, default=0.1, help='label smoothing')
@@ -72,7 +72,7 @@ def main():
     # beta is the amount of noise added to params (if GHN is used for init, otherwise ignored), default: 1e-5
 
     log('loading the %s dataset...' % args.dataset.upper())
-    train_queue = image_loader(args.dataset,
+    train_queue, _, num_classes = image_loader(args.dataset,
                                args.data_dir,
                                im_size=args.imsize,
                                test=False,
