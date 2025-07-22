@@ -44,7 +44,6 @@ Example:
 
 """
 
-
 import torchvision
 import argparse
 import time
@@ -59,11 +58,14 @@ log = partial(log, flush=True)
 
 def main():
     parser = argparse.ArgumentParser(description='ImageNet training')
-    parser.add_argument('-c', '--compile', type=str, default=None, help='use pytorch2.0 compilation for efficiency')
+    parser.add_argument('-c', '--compile', type=str, default=None,
+                        help='use pytorch2.0 compilation for efficiency')
     parser.add_argument('--label_smooth', type=float, default=0.1, help='label smoothing')
     parser.add_argument('--bce', action='store_true', help='use BCE loss instead of cross-entropy')
-    parser.add_argument('--timm_aug', action='store_true', help='use timm augmentations (RandAugment, Mixup, Cutmix)')
-    parser.add_argument('--interm_epoch', type=int, default=5, help='intermediate epochs to keep checkpoints for')
+    parser.add_argument('--timm_aug', action='store_true',
+                        help='use timm augmentations (RandAugment, Mixup, Cutmix)')
+    parser.add_argument('--interm_epoch', type=int, default=5,
+                        help='intermediate epochs to keep checkpoints for')
 
     ddp = setup_ddp()
     args = init_config(mode='train_net', parser=parser, verbose=ddp.rank == 0, debug=0, beta=1e-5)
@@ -72,15 +74,12 @@ def main():
     log('loading the %s dataset...' % args.dataset.upper())
     train_queue = image_loader(args.dataset,
                                args.data_dir,
-                               test=not args.val,
-                               load_train_anyway=True,
+                               im_size=args.imsize,
+                               test=False,
                                batch_size=args.batch_size,
                                num_workers=args.num_workers,
                                seed=args.seed,
-                               ddp=ddp.ddp,
-                               im_size=args.imsize,
-                               transforms_train_val=transforms_imagenet(im_size=args.imsize, timm_aug=args.timm_aug),
-                               verbose=ddp.rank == 0)[0]
+                               verbose=ddp.rank == 0)
 
     trainer = Trainer(eval(f'torchvision.models.{args.arch}()'),
                       opt=args.opt,
@@ -91,19 +90,21 @@ def main():
                       grad_clip=args.grad_clip,
                       device=args.device,
                       log_interval=args.log_interval,
-                      amp=args.amp,                       # automatic mixed precision (default: False)
+                      amp=args.amp,  # automatic mixed precision (default: False)
                       label_smoothing=args.label_smooth,  # label smoothing (default: 0.1)
                       save_dir=args.save,
-                      ckpt=args.ckpt,                     # GHN-3 init (default: None/from scratch)
+                      ckpt=args.ckpt,  # GHN-3 init (default: None/from scratch)
                       epochs=args.epochs,
                       verbose=ddp.rank == 0,
                       bce=args.bce,
                       mixup=args.timm_aug,
-                      compile_mode=args.compile,          # pytorch2.0 compilation for potential speedup (default: None)
+                      compile_mode=args.compile,
+                      # pytorch2.0 compilation for potential speedup (default: None)
                       beta=args.beta,
                       )
 
-    log('\nStarting training {} with {} parameters!'.format(args.arch.upper(), capacity(trainer._model)[1]))
+    log('\nStarting training {} with {} parameters!'.format(args.arch.upper(),
+                                                            capacity(trainer._model)[1]))
 
     for epoch in range(trainer.start_epoch, args.epochs):
 
@@ -120,14 +121,16 @@ def main():
 
         for step, (images, targets) in enumerate(train_queue, start=trainer.start_step):
 
-            if step >= len(train_queue):  # if we resume training from some start_step > 0, then need to break the loop
+            if step >= len(
+                    train_queue):  # if we resume training from some start_step > 0, then need to break the loop
                 break
 
             trainer.update(images, targets)  # update model params
             trainer.log(step)
 
             if args.save:
-                trainer.save(epoch, step, {'args': args}, interm_epoch=args.interm_epoch)  # save model checkpoint
+                trainer.save(epoch, step, {'args': args},
+                             interm_epoch=args.interm_epoch)  # save model checkpoint
 
         trainer.scheduler_step()  # lr scheduler step
 
