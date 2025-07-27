@@ -12,7 +12,7 @@ from ppuda.config import init_config
 from ghn3 import from_pretrained, Graph, Logger, custom_loader
 
 # --------------- 1. Args -------------------
-parser = argparse.ArgumentParser(description='GHN-3 fine-tuning for CIFAR-10')
+parser = argparse.ArgumentParser(description='GHN-3 fine-tuning for CIFAR-100')
 parser.add_argument('--ckpt', type=str, required=True, help='Path to GHN-3 checkpoint')
 parser.add_argument('--epochs', type=int, default=5)
 parser.add_argument('--batch_size', type=int, default=8, help='Batch size for training')
@@ -24,12 +24,12 @@ tf = torchvision.transforms.Compose([
     torchvision.transforms.RandomCrop(32, padding=4),  # keep native resolution
     torchvision.transforms.RandomHorizontalFlip(),
     torchvision.transforms.ToTensor(),
-    torchvision.transforms.Normalize((0.491, 0.482, 0.447),
-                                     (0.247, 0.243, 0.262)),
+    torchvision.transforms.Normalize((0.5071, 0.4867, 0.4408),
+                                     (0.2675, 0.2565, 0.2761)),
 ])
 
 
-trainset = torchvision.datasets.CIFAR10(root="~/data", train=True, download=True, transform=tf)
+trainset = torchvision.datasets.CIFAR100(root="~/data", train=True, download=True, transform=tf)
 trainloader = DataLoader(trainset, batch_size=128, shuffle=True, num_workers=4)
 
 # --------------- 3. Setup GHN -------------------
@@ -42,12 +42,14 @@ logger = Logger(args.epochs * len(trainloader))
 
 # --------------- 4. Valid torchvision models -------------------
 ARCH_POOL = [
-    lambda: torchvision.models.resnet18(num_classes=10),
-    lambda: torchvision.models.resnet34(num_classes=10),
-    lambda: torchvision.models.mobilenet_v2(num_classes=10),
-    lambda: torchvision.models.shufflenet_v2_x0_5(num_classes=10),
-    lambda: torchvision.models.squeezenet1_0(num_classes=10),
-    lambda: torchvision.models.densenet121(num_classes=10),
+    lambda: torchvision.models.resnet18(num_classes=100),
+    lambda: torchvision.models.resnet34(num_classes=100),
+    lambda: torchvision.models.mobilenet_v2(num_classes=100),
+    lambda: torchvision.models.shufflenet_v2_x0_5(num_classes=100),
+    lambda: torchvision.models.squeezenet1_0(num_classes=100),
+    lambda: torchvision.models.densenet121(num_classes=100),
+    lambda: torchvision.models.wide_resnet50_2(num_classes=100),
+    lambda: torchvision.models.wide_resnet101_2(num_classes=100),
 ]
 
 
@@ -86,5 +88,5 @@ for epoch in range(args.epochs):
         step += 1
 
 # --------------- 6. Save the new GHN -------------------
-torch.save({'state_dict': ghn.state_dict()}, "ghn3_cifar10.pt")
-print("✅ Saved fine-tuned GHN for CIFAR-10 → ghn3_cifar10.pt")
+torch.save({'state_dict': ghn.state_dict()}, "ghn3_finetunedfor_cifar100.pt")
+print("✅ Saved fine-tuned GHN for CIFAR-100 → ghn3_cifar100.pt")
